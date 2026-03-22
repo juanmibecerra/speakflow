@@ -19,11 +19,13 @@ export default async (req) => {
   }
 
   try {
-    const { messages } = await req.json();
+    const { messages, userName } = await req.json();
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return new Response(JSON.stringify({ error: 'Messages array required' }), { status: 400 });
     }
+
+    const safeName = typeof userName === 'string' ? userName.slice(0, 50) : '';
 
     // Sanitize messages - only allow user/assistant roles with string content
     const sanitized = messages
@@ -45,7 +47,7 @@ export default async (req) => {
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 1000,
-        system: `You are a friendly English tutor helping a B1-B2 Spanish speaker improve their English. Your rules:
+        system: `You are a friendly English tutor helping ${safeName || 'a student'} (B1-B2 Spanish speaker) improve their English. ${safeName ? `Address them as ${safeName} occasionally. ` : ''}Your rules:
 1. ALWAYS respond in English primarily, but include Spanish translations in parentheses for key corrections.
 2. If the user makes grammar, vocabulary, or phrasing errors, GENTLY correct them at the start of your response using this format: "✏️ Small fix: [corrected version]" then explain briefly why.
 3. If the sentence is correct, acknowledge it: "✅ Perfect sentence!"
